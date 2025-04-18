@@ -11,7 +11,6 @@ public class Response {
 
         public Builder(OutputStream stream) {
             this.outputStream = stream;
-            // Set default headers
             headers.put("Content-Type", "text/plain");
         }
 
@@ -26,15 +25,15 @@ public class Response {
         }
 
         public Builder body(String body) {
-            this.body = body;
-
-            if (!headers.containsKey("Content-Length")) {
-                headers.put("Content-Length", String.valueOf(body.length()));
-            }
+            this.body += body;
             return this;
         }
 
         public void send() throws IOException {
+            if (!headers.containsKey("Content-Length")) {
+                headers.put("Content-Length", String.valueOf(body.length()));
+            }
+
             String statusLine = "HTTP/1.1 " + statusCode + " " + getStatusText(statusCode);
 
             StringBuilder headerSection = new StringBuilder();
@@ -48,6 +47,13 @@ public class Response {
             String fullResponse = statusLine + "\r\n" +
                     headerSection.toString() + "\r\n" +
                     body;
+
+            System.out.println("[RESPONSE] " + statusLine);
+            headers.forEach((k, v) -> System.out.println("[HEADER] " + k + ": " + v));
+            if (!body.isEmpty()) {
+                System.out.println("[BODY] " + body.substring(0, Math.min(body.length(), 200)) +
+                        (body.length() > 200 ? "..." : ""));
+            }
 
             outputStream.write(fullResponse.getBytes(StandardCharsets.UTF_8));
             outputStream.flush();

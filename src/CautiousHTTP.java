@@ -18,21 +18,36 @@ public class CautiousHTTP {
         }
     }
 
+    private static void logIncomingRequest(BufferedReader in) throws IOException {
+        StringBuilder request = new StringBuilder();
+        String line;
+        while ((line = in.readLine()) != null) {
+            if (line.isEmpty()) {
+                break;
+            }
+            request.append(line).append("\n");
+        }
+        System.out.println("Request details:\n" + request.toString());
+    }
+
     private static void handleRequest(Socket clientSocket) {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              OutputStream out = clientSocket.getOutputStream()) {
-            String requestLine = in.readLine();
-            System.out.println("Received request: " + requestLine);
-            String line;
-            while ((line = in.readLine()) != null) {
-                System.out.println(line);
-            }
+            logIncomingRequest(in);
 
             // that \r\n\r defines that it is the end of the headers and
             // the body is being sent as the rest of the response.
-            String response = "HTTP/1.1 200 OK\r\n\r\nHello World!";
-            out.write(response.getBytes());
-            out.flush();
+//            String response = "HTTP/1.1 200 OK\r\n\r\nHello World!";
+//            out.write(response.getBytes());
+//            out.flush();
+
+            new Response.Builder(out)
+                    .status(200)
+                    .header("Content-Type", "text/html")
+                    .body("<h1>Hello World!</h1>")
+                    .body("<h2>Hello naWorld!</h2>")
+                    .send();
+
         } catch (IOException e) {
             System.err.println("Request handling error: " + e.getMessage());
         }
